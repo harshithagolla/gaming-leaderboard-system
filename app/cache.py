@@ -1,4 +1,3 @@
-# app/cache.py
 import os
 import redis
 from typing import Optional
@@ -16,27 +15,28 @@ redis_client: Optional[redis.Redis] = None
 def init_redis():
     global redis_client
     if redis_client is None:
+        print("Initializing Redis connection...")
         redis_client = redis.Redis(
             host=REDIS_HOST,
             port=REDIS_PORT,
             db=REDIS_DB,
             password=REDIS_PASSWORD,
             decode_responses=True,
-            socket_keepalive=True
         )
-        # quick ping to ensure connection (raises if cannot connect)
         try:
             redis_client.ping()
+            print("Redis connected successfully")
         except Exception as e:
-            # if redis is not available, keep None => routes will handle it gracefully
+            print("Redis connection failed:", e)
             redis_client = None
             raise
+
 
 def get_redis():
     return redis_client
 
-def top_key(n: int = 10):
-    return f"leaderboard:top:{n}"
+def top_key(limit: int = 10, offset: int = 0):
+    return f"leaderboard:top:{limit}:{offset}"
 
 def rank_key(user_id: int):
     return f"leaderboard:rank:{user_id}"

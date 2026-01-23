@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,7 +33,7 @@
         h1 {
             font-size: 3em;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .subtitle {
@@ -51,7 +52,7 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         .card h2 {
@@ -95,10 +96,23 @@
             color: white;
         }
 
-        .rank-1 { background: gold; color: #333; }
-        .rank-2 { background: silver; color: #333; }
-        .rank-3 { background: #cd7f32; }
-        .rank-other { background: #667eea; }
+        .rank-1 {
+            background: gold;
+            color: #333;
+        }
+
+        .rank-2 {
+            background: silver;
+            color: #333;
+        }
+
+        .rank-3 {
+            background: #cd7f32;
+        }
+
+        .rank-other {
+            background: #667eea;
+        }
 
         .form-group {
             margin-bottom: 15px;
@@ -194,8 +208,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         @media (max-width: 768px) {
@@ -209,6 +230,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -230,6 +252,10 @@
                     <div class="form-group">
                         <label for="submit-user-id">User ID</label>
                         <input type="number" id="submit-user-id" required placeholder="Enter your user ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" required placeholder="Enter your username">
                     </div>
                     <div class="form-group">
                         <label for="score">Score</label>
@@ -263,14 +289,14 @@
                 const data = await response.json();
                 displayLeaderboard(data.top);
             } catch (error) {
-                document.getElementById('leaderboard-content').innerHTML = 
+                document.getElementById('leaderboard-content').innerHTML =
                     '<div class="error">Failed to load leaderboard. Make sure the API is running.</div>';
             }
         }
 
         function displayLeaderboard(players) {
             if (!players || players.length === 0) {
-                document.getElementById('leaderboard-content').innerHTML = 
+                document.getElementById('leaderboard-content').innerHTML =
                     '<div class="loading">No players yet. Submit a score to get started!</div>';
                 return;
             }
@@ -308,14 +334,15 @@
         document.getElementById('submit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const userId = document.getElementById('submit-user-id').value;
+            const username = document.getElementById('username').value;
             const score = document.getElementById('score').value;
             const resultDiv = document.getElementById('submit-result');
 
             try {
                 const response = await fetch(`${API_BASE}/submit`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: parseInt(userId), score: parseInt(score) })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_id: parseInt(userId), username: username, score: parseInt(score)})
                 });
 
                 const data = await response.json();
@@ -380,4 +407,5 @@
         setInterval(fetchLeaderboard, 5000);
     </script>
 </body>
+
 </html>

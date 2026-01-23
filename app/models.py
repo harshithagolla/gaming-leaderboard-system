@@ -1,4 +1,3 @@
-# app/models.py
 from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, TIMESTAMP, func, UniqueConstraint
 from sqlalchemy.orm import relationship
 from .db import Base

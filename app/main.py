@@ -1,14 +1,29 @@
-# app/main.py
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .routes import router
 from .db import engine, Base
-import os
+from .cache import init_redis
 
 app = FastAPI(title="Leaderboard API")
 
-app.include_router(router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # allow all for development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Create tables if not exist (optional; recommended while developing)
+app.include_router(router, prefix="/api/leaderboard")
+
+@app.get("/")
+def root():
+    return {"message": "Leaderboard API is running "}
+
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
+    try:
+        init_redis()
+    except Exception:
+        print("Redis not available, running without cache")
