@@ -7,6 +7,7 @@ class User(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     username = Column(String(255), unique=True, nullable=False)
     join_date = Column(TIMESTAMP, server_default=func.now())
+    password_hash = Column(String(255), nullable=False)
 
 class GameSession(Base):
     __tablename__ = "game_sessions"

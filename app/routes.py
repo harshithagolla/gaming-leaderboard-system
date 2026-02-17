@@ -4,34 +4,44 @@ from .db import get_db
 from . import crud, schemas
 from .cache import get_redis, rank_key, top_key
 import json
+from .security import get_current_user
+from .models import User
+
+
 
 router = APIRouter()
 
 
 @router.post("/submit", response_model=schemas.RankResp)
-def submit_score(payload: schemas.SubmitScoreReq, db: Session = Depends(get_db)):
+def submit_score(
+    payload: schemas.SubmitScoreReq,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     if payload.score < 0:
-        raise HTTPException(
-            status_code=400, detail="score must be non-negative")
+        raise HTTPException(status_code=400, detail="score must be non-negative")
+
+    user_id = current_user.id
+
     try:
-        crud.ensure_user_exists(db, payload.user_id, payload.username)
-        crud.insert_game_session(db, payload.user_id, payload.score)
-        crud.upsert_leaderboard_increment(db, payload.user_id, payload.score)
+        crud.insert_game_session(db, user_id, payload.score)
+        crud.upsert_leaderboard_increment(db, user_id, payload.score)
         db.commit()
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    
+
     redis = get_redis()
     if redis:
         for key in redis.scan_iter("leaderboard:top:*"):
             redis.delete(key)
-        redis.delete(rank_key(payload.user_id))
+        redis.delete(rank_key(user_id))
 
+    total = crud.get_user_total_score(db, user_id)
+    rank = crud.get_user_rank(db, user_id)
 
-    total = crud.get_user_total_score(db, payload.user_id)
-    rank = crud.get_user_rank(db, payload.user_id)
-    return {"user_id": payload.user_id, "total_score": total, "rank": rank}
+    return {"user_id": user_id, "total_score": total, "rank": rank}
+
 
 
 @router.get("/top")
@@ -55,7 +65,19 @@ def get_top(
 
     return {"top": rows}
 
+@router.get("/rank/me")
+def get_my_rank(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    total = crud.get_user_total_score(db, current_user.id)
+    rank = crud.get_user_rank(db, current_user.id)
 
+    return {
+        "user_id": current_user.id,
+        "total_score": total,
+        "rank": rank
+    }
 
 @router.get("/rank/{user_id}")
 def get_rank(user_id: int, db: Session = Depends(get_db)):
@@ -80,4 +102,7 @@ def get_rank(user_id: int, db: Session = Depends(get_db)):
         redis.setex(cache_key, 10, json.dumps(result))  # TTL = 10 sec
 
     return result
+
+
+
 

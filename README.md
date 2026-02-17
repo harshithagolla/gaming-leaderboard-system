@@ -1,19 +1,22 @@
 # 🎮 Gaming Leaderboard System
 
-A backend system for managing a gaming leaderboard with real-time ranking, pagination, and Redis caching.
+A scalable backend system for managing a gaming leaderboard with real-time rankings, JWT authentication, pagination, and Redis caching.
 
-Built to demonstrate backend engineering concepts such as database design, caching strategies, cache invalidation, and Docker-based infrastructure.
+Built to demonstrate backend engineering concepts including database design, authentication, caching strategies, cache invalidation, and Docker-based infrastructure.
 
 ---
 
 ## ✨ Features
 
-- Submit player scores
-- Auto-create users on first submission
-- Maintain cumulative leaderboard
+- User registration and login (JWT authentication)
+- Secure protected endpoints using Bearer tokens
+- Submit player scores (authenticated)
+- Automatic leaderboard updates
+- Cumulative score tracking per user
 - Store individual game sessions
 - Fetch top players (paginated)
-- Fetch individual user rank
+- Fetch rank by user ID
+- Fetch current logged-in user rank
 - Redis caching for read-heavy APIs
 - Cache invalidation on score updates
 - Graceful fallback when Redis is unavailable
@@ -22,23 +25,25 @@ Built to demonstrate backend engineering concepts such as database design, cachi
 
 ## 🛠 Technologies Used
 
-### Backend
+**Backend**
 - Python 3.10
 - FastAPI
-- SQLAlchemy
+- SQLAlchemy (ORM)
 - PyMySQL
 - Uvicorn
+- Passlib (bcrypt hashing)
+- Python-JOSE (JWT)
 
-### Database
+**Database**
 - MySQL
 
-### Caching
+**Caching**
 - Redis
 
-### Infrastructure
+**Infrastructure**
 - Docker (Redis container)
 
-### Frontend
+**Frontend**
 - HTML, CSS
 - Vanilla JavaScript (Fetch API)
 
@@ -46,9 +51,15 @@ Built to demonstrate backend engineering concepts such as database design, cachi
 
 ## 📌 API Endpoints
 
-- `POST /api/leaderboard/submit`
-- `GET /api/leaderboard/top?limit=10&offset=0`
-- `GET /api/leaderboard/rank/{user_id}`
+**Authentication**
+- POST /auth/register
+- POST /auth/login
+
+**Leaderboard**
+- POST /api/leaderboard/submit (Protected)
+- GET /api/leaderboard/top?limit=10&offset=0
+- GET /api/leaderboard/rank/{user_id}
+- GET /api/leaderboard/rank/me (Protected)
 
 ---
 
@@ -63,6 +74,14 @@ Built to demonstrate backend engineering concepts such as database design, cachi
 - Short TTL for freshness
 
 ---
+
+## 🔐 Authentication
+
+- JWT-based authentication
+- Password hashing using bcrypt
+- Token-based access control for protected APIs
+- Secure dependency injection using FastAPI Depends
+
 
 ## ▶️ Project Setup (Commands)
 
@@ -89,11 +108,11 @@ KEYS *
 TTL leaderboard:top:10:0
 GET leaderboard:rank:102
 9️⃣ Start backend server
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 API:
-http://127.0.0.1:8000
+http://127.0.0.1:8001
 Swagger Docs:
-http://127.0.0.1:8000/docs
+http://127.0.0.1:8001/docs
 🔟 Run frontend
 cd frontend
 python -m http.server 5500

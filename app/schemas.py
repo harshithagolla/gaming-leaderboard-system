@@ -1,8 +1,6 @@
 from pydantic import BaseModel
 
 class SubmitScoreReq(BaseModel):
-    user_id: int
-    username: str | None = None
     score: int
 
 class LeaderboardEntry(BaseModel):

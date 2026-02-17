@@ -238,6 +238,26 @@
             <p class="subtitle">Real-time rankings and player stats</p>
         </header>
 
+        <!-- AUTH SECTION -->
+        <div class="card" style="margin-bottom:20px;">
+            <h2>Login / Register</h2>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="auth-username" placeholder="Enter username">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="auth-password" placeholder="Enter password">
+            </div>
+
+            <button onclick="register()">Register</button>
+            <button onclick="login()">Login</button>
+
+            <div id="auth-status"></div>
+        </div>
+
         <div class="grid">
             <div class="card">
                 <h2><span class="live-indicator"></span>Top 10 Players</h2>
@@ -250,16 +270,8 @@
                 <h2>Submit Score</h2>
                 <form id="submit-form">
                     <div class="form-group">
-                        <label for="submit-user-id">User ID</label>
-                        <input type="number" id="submit-user-id" required placeholder="Enter your user ID">
-                    </div>
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" required placeholder="Enter your username">
-                    </div>
-                    <div class="form-group">
-                        <label for="score">Score</label>
-                        <input type="number" id="score" required placeholder="Enter your score" min="0">
+                        <label>Score</label>
+                        <input type="number" id="score" required min="0" placeholder="Enter your score">
                     </div>
                     <button type="submit">Submit Score</button>
                 </form>
@@ -269,143 +281,172 @@
 
         <div class="card">
             <h2>Check Your Rank</h2>
-            <form id="rank-form">
-                <div class="form-group">
-                    <label for="rank-user-id">User ID</label>
-                    <input type="number" id="rank-user-id" required placeholder="Enter user ID to check rank">
-                </div>
-                <button type="submit">Check Rank</button>
-            </form>
+            <button onclick="checkMyRank()">Check My Rank</button>
             <div id="rank-result"></div>
         </div>
     </div>
 
-    <script>
-        const API_BASE = 'http://127.0.0.1:8000/api/leaderboard';
+<script>
+    const API_BASE = 'http://127.0.0.1:8001';
+    const LEADERBOARD_API = API_BASE + '/api/leaderboard';
 
-        async function fetchLeaderboard() {
-            try {
-                const response = await fetch(`${API_BASE}/top`);
-                const data = await response.json();
-                displayLeaderboard(data.top);
-            } catch (error) {
-                document.getElementById('leaderboard-content').innerHTML =
-                    '<div class="error">Failed to load leaderboard. Make sure the API is running.</div>';
-            }
+    function getToken() {
+        return localStorage.getItem("token");
+    }
+
+    function setToken(token) {
+        localStorage.setItem("token", token);
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+    }
+
+    async function register() {
+        const username = document.getElementById("auth-username").value;
+        const password = document.getElementById("auth-password").value;
+
+        const response = await fetch(`${API_BASE}/auth/register?username=${username}&password=${password}`, {
+            method: "POST"
+        });
+
+        const data = await response.json();
+        document.getElementById("auth-status").innerText = JSON.stringify(data);
+    }
+
+    async function login() {
+        const username = document.getElementById("auth-username").value;
+        const password = document.getElementById("auth-password").value;
+
+        const response = await fetch(`${API_BASE}/auth/login?username=${username}&password=${password}`, {
+            method: "POST"
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            setToken(data.access_token);
+            document.getElementById("auth-status").innerText = "✅ Logged in successfully";
+        } else {
+            document.getElementById("auth-status").innerText = data.detail;
+        }
+    }
+
+    async function fetchLeaderboard() {
+        try {
+            const response = await fetch(`${LEADERBOARD_API}/top`);
+            const data = await response.json();
+            displayLeaderboard(data.top);
+        } catch {
+            document.getElementById('leaderboard-content').innerHTML =
+                '<div class="error">Failed to load leaderboard.</div>';
+        }
+    }
+
+    function displayLeaderboard(players) {
+        if (!players || players.length === 0) {
+            document.getElementById('leaderboard-content').innerHTML =
+                '<div class="loading">No players yet.</div>';
+            return;
         }
 
-        function displayLeaderboard(players) {
-            if (!players || players.length === 0) {
-                document.getElementById('leaderboard-content').innerHTML =
-                    '<div class="loading">No players yet. Submit a score to get started!</div>';
-                return;
-            }
-
-            let html = `
-                <table class="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>User ID</th>
-                            <th>Username</th>
-                            <th>Total Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            players.forEach((player, index) => {
-                const rank = index + 1;
-                const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
-                html += `
+        let html = `
+            <table class="leaderboard-table">
+                <thead>
                     <tr>
-                        <td><span class="rank-badge ${rankClass}">${rank}</span></td>
-                        <td>${player.user_id}</td>
-                        <td>${player.username || 'N/A'}</td>
-                        <td>${player.total_score.toLocaleString()}</td>
+                        <th>Rank</th>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Total Score</th>
                     </tr>
-                `;
-            });
+                </thead>
+                <tbody>
+        `;
 
-            html += '</tbody></table>';
-            document.getElementById('leaderboard-content').innerHTML = html;
+        players.forEach((player, index) => {
+            const rank = index + 1;
+            const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+            html += `
+                <tr>
+                    <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+                    <td>${player.user_id}</td>
+                    <td>${player.username}</td>
+                    <td>${player.total_score.toLocaleString()}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('leaderboard-content').innerHTML = html;
+    }
+
+    document.getElementById('submit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const token = getToken();
+        if (!token) {
+            alert("Please login first!");
+            return;
         }
 
-        document.getElementById('submit-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const userId = document.getElementById('submit-user-id').value;
-            const username = document.getElementById('username').value;
-            const score = document.getElementById('score').value;
-            const resultDiv = document.getElementById('submit-result');
+        const score = parseInt(document.getElementById('score').value);
 
-            try {
-                const response = await fetch(`${API_BASE}/submit`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({user_id: parseInt(userId), username: username, score: parseInt(score)})
-                });
+        const response = await fetch(`${LEADERBOARD_API}/submit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ score: score })
+        });
 
-                const data = await response.json();
+        const data = await response.json();
+        const resultDiv = document.getElementById('submit-result');
 
-                if (response.ok) {
-                    resultDiv.innerHTML = `
-                        <div class="result success">
-                            <h3>✓ Score Submitted!</h3>
-                            <p>User ID: ${data.user_id}</p>
-                            <p>Total Score: ${data.total_score.toLocaleString()}</p>
-                            <p>Current Rank: #${data.rank}</p>
-                        </div>
-                    `;
-                    fetchLeaderboard();
-                } else {
-                    resultDiv.innerHTML = `
-                        <div class="result error">
-                            <h3>Error</h3>
-                            <p>${data.detail || 'Failed to submit score'}</p>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `
-                    <div class="result error">
-                        <h3>Error</h3>
-                        <p>Failed to connect to the server. Make sure the API is running.</p>
-                    </div>
-                `;
+        if (response.ok) {
+            resultDiv.innerHTML = `
+                <div class="result success">
+                    <h3>✓ Score Submitted!</h3>
+                    <p>Total Score: ${data.total_score.toLocaleString()}</p>
+                    <p>Current Rank: #${data.rank}</p>
+                </div>
+            `;
+            fetchLeaderboard();
+        } else {
+            resultDiv.innerHTML = `
+                <div class="result error">
+                    <h3>Error</h3>
+                    <p>${data.detail}</p>
+                </div>
+            `;
+        }
+    });
+
+    async function checkMyRank() {
+        const token = getToken();
+        if (!token) {
+            alert("Please login first!");
+            return;
+        }
+
+        const response = await fetch(`${LEADERBOARD_API}/rank/me`, {
+            headers: {
+                'Authorization': 'Bearer ' + token
             }
         });
 
-        document.getElementById('rank-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const userId = document.getElementById('rank-user-id').value;
-            const resultDiv = document.getElementById('rank-result');
+        const data = await response.json();
 
-            try {
-                const response = await fetch(`${API_BASE}/rank/${userId}`);
-                const data = await response.json();
+        document.getElementById('rank-result').innerHTML = `
+            <div class="result">
+                <h3>Your Rank</h3>
+                <p>Total Score: ${data.total_score.toLocaleString()}</p>
+                <p>Current Rank: #${data.rank}</p>
+            </div>
+        `;
+    }
 
-                resultDiv.innerHTML = `
-                    <div class="result">
-                        <h3>Rank Information</h3>
-                        <p>User ID: ${data.user_id}</p>
-                        <p>Total Score: ${data.total_score.toLocaleString()}</p>
-                        <p>Current Rank: #${data.rank}</p>
-                    </div>
-                `;
-            } catch (error) {
-                resultDiv.innerHTML = `
-                    <div class="result error">
-                        <h3>Error</h3>
-                        <p>Failed to fetch rank information.</p>
-                    </div>
-                `;
-            }
-        });
-
-        // Auto-refresh leaderboard every 5 seconds
-        fetchLeaderboard();
-        setInterval(fetchLeaderboard, 5000);
-    </script>
+    fetchLeaderboard();
+    setInterval(fetchLeaderboard, 5000);
+</script>
 </body>
-
-</html>

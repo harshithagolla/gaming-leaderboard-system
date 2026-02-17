@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routes import router
+from .routes import router as leaderboard_router
 from .db import engine, Base
+from .auth import router as auth_router
 from .cache import init_redis
 
 app = FastAPI(title="Leaderboard API")
@@ -14,7 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router, prefix="/api/leaderboard")
+app.include_router(leaderboard_router, prefix="/api/leaderboard")
+app.include_router(auth_router)
 
 @app.get("/")
 def root():
