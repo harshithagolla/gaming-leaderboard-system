@@ -98,15 +98,14 @@ pip install -r requirements.txt
 5️⃣ Setup MySQL database
 mysql -u root -p < schema.sql
 6️⃣ Create environment file .env
-env
+env (# Database Configuration -DB_USER DB_PASS DB_HOST DB_PORT DB_NAME
+# Redis Configuration REDIS_HOST REDIS_PORT REDIS_DB REDIS_PASSWORD)
 7️⃣ Run Redis using Docker
 docker run -d --name redis-local -p 6379:6379 redis:7
 8️⃣ Verify Redis
 docker exec -it redis-local redis-cli
-PING
-KEYS *
-TTL leaderboard:top:10:0
-GET leaderboard:rank:102
+PING, KEYS *
+TTL leaderboard:top:10:0, GET leaderboard:rank:102
 9️⃣ Start backend server
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 API:
@@ -116,5 +115,4 @@ http://127.0.0.1:8001/docs
 🔟 Run frontend
 cd frontend
 python -m http.server 5500
-Open browser:
-http://localhost:5500/index.html
+Open browser - http://localhost:5500/index.html
