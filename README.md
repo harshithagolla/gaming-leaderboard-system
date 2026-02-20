@@ -1,9 +1,8 @@
 # 🎮 Gaming Leaderboard System
 
-A scalable backend system for managing a gaming leaderboard with real-time rankings, JWT authentication, pagination, and Redis caching.
+A fully containerized, scalable backend system for managing a real-time gaming leaderboard with JWT authentication, pagination, Redis caching.
 
-Built to demonstrate backend engineering concepts including database design, authentication, caching strategies, cache invalidation, and Docker-based infrastructure.
-
+This project demonstrates backend engineering concepts including database design, authentication flows, caching strategies, cache invalidation, service orchestration, and Docker-based multi-container infrastructure.
 ---
 
 ## ✨ Features
@@ -20,6 +19,16 @@ Built to demonstrate backend engineering concepts including database design, aut
 - Redis caching for read-heavy APIs
 - Cache invalidation on score updates
 - Graceful fallback when Redis is unavailable
+
+---
+
+## 🏗 Architecture Overview
+
+The system runs as multiple isolated containers using Docker Compose:
+- Backend API (FastAPI)
+- MySQL Database
+- Redis Cache
+- Frontend (Static HTML + JS)
 
 ---
 
@@ -41,7 +50,8 @@ Built to demonstrate backend engineering concepts including database design, aut
 - Redis
 
 **Infrastructure**
-- Docker (Redis container)
+- Docker
+- Docker compose
 
 **Frontend**
 - HTML, CSS
@@ -81,6 +91,41 @@ Built to demonstrate backend engineering concepts including database design, aut
 - Password hashing using bcrypt
 - Token-based access control for protected APIs
 - Secure dependency injection using FastAPI Depends
+
+---
+
+## 🐳 Docker-Based Setup
+
+1️⃣ Clone repository
+git clone <repo-url>
+cd gaming-leaderboard
+2️⃣ Start all services
+docker-compose up --build
+
+This will:
+- Build backend image
+- Start MySQL container
+- Start Redis container
+- Initialize database schema
+- Create persistent volume
+- Start backend API
+- Start frontend
+
+**🌍Access the Application**
+Backend API:
+http://localhost:8001
+
+Swagger Docs:
+http://localhost:8001/docs
+
+Frontend:
+http://localhost:5500
+
+🛑 Stop Containers
+docker-compose down
+
+🔄 Reset Database (Remove Volume)
+docker-compose down -v
 
 
 ## ▶️ Project Setup (Commands)

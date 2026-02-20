@@ -1,34 +1,59 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
+    container_name: leaderboard-mysql
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: harshi1704
       MYSQL_DATABASE: leaderboard_db
-    ports:
-      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
+    container_name: leaderboard-redis
+    restart: always
     ports:
       - "6379:6379"
 
   app:
     build: .
-    ports:
-      - "8000:8000"
+    container_name: leaderboard-backend
+    restart: always
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "8001:8001"
     environment:
+      DB_USER: root
+      DB_PASS: harshi1704
       DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: leaderboard_db
       REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
     volumes:
       - .:/app
+
+  frontend:
+    image: python:3.11-slim
+    container_name: leaderboard-frontend
+    working_dir: /frontend
+    volumes:
+      - ./frontend:/frontend
+    command: python -m http.server 5500
+    ports:
+      - "5500:5500"
 
 volumes:
   mysql_data:
